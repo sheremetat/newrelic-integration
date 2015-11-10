@@ -31,14 +31,14 @@ import com.signalfx.newrelic.client.model.MetricValue;
 public class MetricDataRequestTest {
 
     private Server server;
-    private AppDTestHandler appDTestHandler;
+    private NewRelicTestHandler newRelicTestHandler;
 
     @Before
     public void setUp() throws Exception {
-        appDTestHandler = new AppDTestHandler();
+        newRelicTestHandler = new NewRelicTestHandler();
 
         server = new Server(0);
-        server.setHandler(appDTestHandler);
+        server.setHandler(newRelicTestHandler);
         server.start();
     }
 
@@ -51,26 +51,27 @@ public class MetricDataRequestTest {
     }
 
     @Test
-    @Ignore
     public void testGetMetric() throws Exception {
         MetricDataRequest metricDataRequest = getMetricDataRequest();
         List<MetricData> metricDataList = metricDataRequest.get();
-        assertEquals(1, metricDataList.size());
 
-        MetricData metricData = metricDataList.get(0);
-        //assertEquals("End User Experience|Device|Computer|AJAX Requests per Minute",
-        //        metricData.metricPath);
-        assertEquals(4, metricData.metricValues.size());
+        // New Metric name is calculated by formula "NEWRELIC metric name" + "/" + "value"
+        // In case of 6 values we will have 6 metrics
+        assertEquals(6, metricDataList.size());
+
+        MetricData metricData = metricDataList.get(5);
+        assertEquals("Custom/EventType/hits/max_value",
+                metricData.metricName);
+        assertEquals(1, metricData.metricValues.size());
 
         MetricValue metricValue = metricData.metricValues.get(0);
-        assertEquals(1435686360000L, metricValue.startTimeInMillis);
-        assertEquals(57L, metricValue.value);
+        assertEquals(1447179120000L, metricValue.startTimeInMillis);
+        assertEquals(0.964f, metricValue.value, 0.001);
     }
 
     @Test
-    @Ignore
     public void testGetMetricUnauthorized() throws Exception {
-        appDTestHandler.setStatus(HttpStatus.UNAUTHORIZED_401);
+        newRelicTestHandler.setStatus(HttpStatus.UNAUTHORIZED_401);
         MetricDataRequest metricDataRequest = getMetricDataRequest();
         try {
             metricDataRequest.get();
@@ -81,9 +82,8 @@ public class MetricDataRequestTest {
     }
 
     @Test
-    @Ignore
     public void testGetMetricUnhandled() throws Exception {
-        appDTestHandler.setStatus(HttpStatus.SERVICE_UNAVAILABLE_503);
+        newRelicTestHandler.setStatus(HttpStatus.FORBIDDEN_403);
         MetricDataRequest metricDataRequest = getMetricDataRequest();
         try {
             metricDataRequest.get();
@@ -94,7 +94,6 @@ public class MetricDataRequestTest {
     }
 
     @Test
-    @Ignore
     public void testServerNotAvailable() throws Exception {
         MetricDataRequest metricDataRequest = getMetricDataRequest();
         server.stop();
@@ -110,17 +109,16 @@ public class MetricDataRequestTest {
         final int port = server.getConnectors()[0].getLocalPort();
         MetricDataRequest metricDataRequest = new MetricDataRequest("http://localhost:" + port,
                 "token");
-        metricDataRequest.setAppName("Any");
+        metricDataRequest.setAppName("applications");
         metricDataRequest.setTimeParams(MetricDataRequest.TimeParams.beforeNow(2));
         return metricDataRequest;
     }
 
     @Test
-    @Ignore
     public void testTimeParams() throws Exception {
         assertEquals(new MetricDataRequest.TimeParams("AFTER_TIME", 100, 200, 0),
                 MetricDataRequest.TimeParams.afterTime(100, 200));
-        assertEquals(new MetricDataRequest.TimeParams("BEFORE_NOW", 100, 0, 0),
+        assertEquals(new MetricDataRequest.TimeParams("BEFORE_NOW", 100, System.currentTimeMillis() - 100 * 60 * 1000, System.currentTimeMillis()),
                 MetricDataRequest.TimeParams.beforeNow(100));
         assertEquals(new MetricDataRequest.TimeParams("BEFORE_TIME", 100, 0, 200),
                 MetricDataRequest.TimeParams.beforeTime(100, 200));
@@ -128,7 +126,7 @@ public class MetricDataRequestTest {
                 MetricDataRequest.TimeParams.betweenTime(100, 200));
     }
 
-    private class AppDTestHandler extends AbstractHandler {
+    private class NewRelicTestHandler extends AbstractHandler {
 
         private int status = HttpStatus.OK_200;
 
@@ -139,10 +137,23 @@ public class MetricDataRequestTest {
         public void handle(String target, Request baseRequest, HttpServletRequest request,
                            HttpServletResponse response)
                 throws IOException, ServletException {
-            String responseString =
-                    IOUtils.toString(
-                            getClass().getResourceAsStream(
-                                    String.format("/metric_response_%d.json", status)));
+
+            String responseString;
+            if (status != HttpStatus.OK_200) {
+                String mockFile = "/metric_response_" + status + ".json";
+
+                responseString =
+                        IOUtils.toString(
+                                getClass().getResourceAsStream(
+                                        String.format(mockFile, status)));
+            } else {
+                String mockFile = "/" + target.split("/")[target.split("/").length - 1];
+
+                responseString =
+                        IOUtils.toString(
+                                getClass().getResourceAsStream(
+                                        String.format(mockFile, status)));
+            }
             response.setStatus(status);
             response.getWriter().write(responseString);
             baseRequest.setHandled(true);

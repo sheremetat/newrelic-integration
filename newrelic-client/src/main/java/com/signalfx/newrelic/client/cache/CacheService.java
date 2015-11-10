@@ -7,6 +7,8 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import com.signalfx.newrelic.client.exception.RequestException;
+import com.signalfx.newrelic.client.exception.UnauthorizedException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,12 +32,21 @@ public class CacheService {
      * Time interval to update metric name in database
      */
     public static final long CACHE_EXPIRED_INTERVAL = 24 * 60 * 60 * 1000; // time in ms
-    private long lastUpdate = 0L;
+
+    private HashMap<String, Long> LAST_UPDATE_TIME = new HashMap<>();
 
     private CacheService() {
     }
 
-    public boolean isExpired() {
+    private void updateLastUpdateTime(String type, Long lastUpdate){
+            LAST_UPDATE_TIME.put(type, lastUpdate);
+    }
+
+    public boolean isExpired(String type) {
+        long lastUpdate = 0L;
+        if(LAST_UPDATE_TIME.containsKey(type)){
+            lastUpdate = LAST_UPDATE_TIME.get(type);
+        }
         long now = new Date().getTime();
         return now - lastUpdate > CACHE_EXPIRED_INTERVAL;
     }
@@ -48,8 +59,8 @@ public class CacheService {
      * @param type - Type of metric group (servers, applications, browser_applications, etc)
      * @param newRelicApiToken - NewRelic API token
      */
-    public void updateCache(String newRelicUrl, String type, String newRelicApiToken) {
-        HttpResponse<String> response = null;
+    public void updateCache(String newRelicUrl, String type, String newRelicApiToken) throws RequestException, UnauthorizedException {
+        HttpResponse<String> response;
         try {
             response = Unirest.get(
                     newRelicUrl + "/" + type + ".json")
@@ -57,10 +68,10 @@ public class CacheService {
                     .queryString("output", "json")
                     .asString();
         } catch (UnirestException e) {
-            System.out.println("Something was wrong with sending request." + e.getLocalizedMessage());
+            throw new RequestException("Something was wrong with sending request.", e);
         }
         if (response == null) {
-            System.out.println("Response is empty");
+            throw new RequestException("Response is empty.");
         } else {
             switch (response.getStatus()) {
                 case 200: {
@@ -75,20 +86,17 @@ public class CacheService {
 
                         loadMetricNames(newRelicUrl, newRelicApiToken, principal);
                     }
-
+                    updateLastUpdateTime(type, System.currentTimeMillis());
                     return;
                 }
                 case 401: {
-                    System.out.println("Authentication failed");
+                    throw new UnauthorizedException("Authentication failed");
                 }
                 default: {
-                    System.out.println("Unhandled response code " + response.getStatus());
+                    throw new RequestException("Unhandled response code " + response.getStatus());
                 }
             }
         }
-
-
-        lastUpdate = new Date().getTime();
     }
 
     /**
@@ -99,7 +107,7 @@ public class CacheService {
      * @param principal - Principal to update
      * @param newRelicApiToken - NewRelic API token
      */
-    private void loadMetricNames(String newRelicUrl, String newRelicApiToken, Principal principal) {
+    private void loadMetricNames(String newRelicUrl, String newRelicApiToken, Principal principal)  throws RequestException, UnauthorizedException {
         HttpResponse<String> response = null;
         try {
             response = Unirest.get(
@@ -108,10 +116,10 @@ public class CacheService {
                     .queryString("output", "json")
                     .asString();
         } catch (UnirestException e) {
-            System.out.println("Something was wrong with sending request." + e.getLocalizedMessage());
+            throw new RequestException("Something was wrong with sending request.", e);
         }
         if (response == null) {
-            System.out.println("Response is empty");
+            throw new RequestException("Response is empty.");
         } else {
             switch (response.getStatus()) {
                 case 200: {
@@ -130,10 +138,10 @@ public class CacheService {
                     return;
                 }
                 case 401: {
-                    System.out.println("Authentication failed");
+                    throw new UnauthorizedException("Authentication failed");
                 }
                 default: {
-                    System.out.println("Unhandled response code " + response.getStatus());
+                    throw new RequestException("Unhandled response code " + response.getStatus());
                 }
             }
         }

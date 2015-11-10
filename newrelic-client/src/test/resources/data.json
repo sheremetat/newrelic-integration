@@ -1,0 +1,25 @@
+{
+  "metric_data": {
+    "from": "2015-11-10T17:43:47+00:00",
+    "to": "2015-11-10T18:13:47+00:00",
+    "metrics": [
+      {
+        "name": "Custom/EventType/hits",
+        "timeslices": [
+          {
+            "from": "2015-11-10T17:42:00+00:00",
+            "to": "2015-11-10T18:12:00+00:00",
+            "values": {
+              "total_value": 0,
+              "average_value": 0,
+              "call_count": 81585,
+              "calls_per_minute": 2720,
+              "min_value": 0,
+              "max_value": 0.964
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

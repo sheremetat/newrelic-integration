@@ -74,8 +74,9 @@ public class MetricDataRequest {
         List<MetricData> metricData = new ArrayList<>();
 
         CacheService cache = CacheService.create();
-        if (cache.isExpired())
+        if (cache.isExpired(this.appName)) {
             cache.updateCache(this.newRelicURL, this.appName, this.newRelicApiToken);
+        }
 
         List<Principal> principals = cache.readPrincipals(appName);
         for (Principal principal : principals) {

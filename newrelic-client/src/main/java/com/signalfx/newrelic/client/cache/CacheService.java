@@ -31,7 +31,7 @@ public class CacheService {
     /**
      * Time interval to update metric name in database
      */
-    public static final long CACHE_EXPIRED_INTERVAL = 24 * 60 * 60 * 1000; // time in ms
+    private static final long CACHE_EXPIRED_INTERVAL = 24 * 60 * 60 * 1000; // time in ms
 
     private HashMap<String, Long> LAST_UPDATE_TIME = new HashMap<>();
 
@@ -147,11 +147,11 @@ public class CacheService {
         }
     }
 
-    public void createPrincipal(Principal principal) {
+    private void createPrincipal(Principal principal) {
         Database.getInstance().createPrincipal(principal);
     }
 
-    public void refreshMetricsForPrincipal(Principal principal, List<String> metricNames) {
+    private void refreshMetricsForPrincipal(Principal principal, List<String> metricNames) {
         Database.getInstance().refreshMetricsForPrincipal(principal, metricNames);
     }
 
@@ -160,4 +160,8 @@ public class CacheService {
     }
 
 
+    public void invalidateCache() {
+        LAST_UPDATE_TIME.clear();
+        Database.getInstance().clear();
+    }
 }

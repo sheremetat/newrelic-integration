@@ -47,4 +47,25 @@ public class Principal {
     public String getType() {
         return type;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Principal principal = (Principal) o;
+
+        if (!type.equals(principal.type)) return false;
+        if (!id.equals(principal.id)) return false;
+        return metrics.equals(principal.metrics);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type.hashCode();
+        result = 31 * result + id.hashCode();
+        result = 31 * result + metrics.hashCode();
+        return result;
+    }
 }

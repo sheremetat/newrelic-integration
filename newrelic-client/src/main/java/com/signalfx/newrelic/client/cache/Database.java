@@ -79,4 +79,8 @@ public class Database {
             return Collections.emptyList();
         }
     }
+
+    public void clear() {
+        db.clear();
+    }
 }

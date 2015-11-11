@@ -19,12 +19,9 @@ import com.google.common.collect.Lists;
 public class InfoParserTest {
 
     @Test
-    @Ignore
     public void testParseInfo() throws Exception {
         String[] apis = {
                 "applications",
-                "browser_application",
-                "mobile_applications",
                 "servers"
         };
         AppInfo expectedConfig = new AppInfo(Arrays.asList(apis));

@@ -5,28 +5,39 @@ package com.signalfx.newrelic.process;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import com.signalfx.newrelic.client.MetricDataRequest;
+import com.signalfx.newrelic.client.exception.RequestException;
+import com.signalfx.newrelic.client.exception.UnauthorizedException;
+import com.signalfx.newrelic.client.model.MetricData;
+import com.signalfx.newrelic.client.model.MetricValue;
+import com.signalfx.newrelic.process.info.AppInfo;
 import com.signalfx.newrelic.process.reporter.Reporter;
+import com.signalfx.newrelic.process.status.StatusType;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 public class ReportNewRelicTest {
 
     @Test
-    @Ignore
     /**
      * Normal process of retrieving and reporting metrics.
      */
     public void testProcess() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
-        MetricData metricData = new MetricData("", 0L, "name", "A|B");
-        metricData.metricValues.add(new MetricValue(1, 1, 1, 1, 1, 2));
+        MetricData metricData = new MetricData("name");
+        metricData.metricValues.add(new MetricValue(1, 2));
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenReturn(Collections.singletonList(metricData));
@@ -37,15 +48,15 @@ public class ReportNewRelicTest {
 
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(1L));
 
         Map<String, String> expectedDimensions = getExpectedDimensions();
-        expectedDimensions.put("C", "A");
+        expectedDimensions.put("metric_source", "NewRelic");
 
         Mockito.verify(request, Mockito.times(1)).get();
         Mockito.verify(reporter, Mockito.times(1)).report(
-                Collections.singletonList(getDataPoint("B", 2, 1, expectedDimensions)));
+                Collections.singletonList(getDataPoint("name", 2, 1, expectedDimensions)));
         assertEquals(1,
                 metricRegistry.counter(StatusType.dataPointsReported.name()).getCount());
         assertEquals(0,
@@ -53,17 +64,16 @@ public class ReportNewRelicTest {
         assertEquals(1,
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(0,
-                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());*/
+                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
     }
 
     @Test
-    @Ignore
     /**
      * Unable to retrieve metrics from NewRelic.
      */
     public void testMetricRequestFailure() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenThrow(new RequestException(""));
@@ -75,7 +85,7 @@ public class ReportNewRelicTest {
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(
                 ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(10L));
 
         Mockito.verify(request, Mockito.times(1)).get();
@@ -88,16 +98,15 @@ public class ReportNewRelicTest {
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(1,
                 metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
-    */}
+    }
 
     @Test
-    @Ignore
     /**
      * Request to NewRelic was not authorized.
      */
     public void testMetricRequestUnauthorized() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenThrow(new UnauthorizedException(""));
@@ -108,7 +117,7 @@ public class ReportNewRelicTest {
 
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(10L));
 
         Mockito.verify(request, Mockito.times(1)).get();
@@ -121,20 +130,19 @@ public class ReportNewRelicTest {
         assertEquals(0,
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(0,
-                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());*/
+                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
     }
 
     @Test
-    @Ignore
     /**
      * Submitting metrics to SignalFx failure.
      */
     public void testProcessReportFailure() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
-        MetricData metricData = new MetricData("", 0L, "name", "A|B");
-        metricData.metricValues.add(new MetricValue(1, 1, 1, 1, 1, 2));
+        MetricData metricData = new MetricData("B");
+        metricData.metricValues.add(new MetricValue(1, 2));
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenReturn(Collections.singletonList(metricData));
@@ -147,11 +155,11 @@ public class ReportNewRelicTest {
 
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(10L));
 
         Map<String, String> expectedDimensions = getExpectedDimensions();
-        expectedDimensions.put("C", "A");
+        expectedDimensions.put("metric_source", "NewRelic");
 
         Mockito.verify(request, Mockito.times(1)).get();
         Mockito.verify(reporter, Mockito.times(1)).report(
@@ -163,19 +171,18 @@ public class ReportNewRelicTest {
         assertEquals(1,
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(0,
-                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());*/
+                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
     }
 
     @Test
-    @Ignore
     /**
      * Normal process with metrics with empty value list from NewRelic.
      */
     public void testProcessMetricEmpty() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
-        MetricData metricData = new MetricData("", 0L, "name", "A|B");
+        MetricData metricData = new MetricData("B");
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenReturn(Collections.singletonList(metricData));
@@ -187,7 +194,7 @@ public class ReportNewRelicTest {
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(
                 ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(10L));
 
         Mockito.verify(request, Mockito.times(1)).get();
@@ -200,17 +207,16 @@ public class ReportNewRelicTest {
         assertEquals(0,
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(0,
-                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());*/
+                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
     }
 
     @Test
-    @Ignore
     /**
      * Normal process with empty list of metrics from NewRelic.
      */
     public void testProcessNoMetrics() throws Exception {
-        /*AppInfo app = new AppInfo("any");
-        app.metrics.add(new MetricInfo("A|B", "C", null));
+        String[] domains = {"applications"};
+        AppInfo app = new AppInfo(Arrays.asList(domains));
 
         MetricDataRequest request = Mockito.mock(MetricDataRequest.class);
         Mockito.when(request.get()).thenReturn(Collections.<MetricData>emptyList());
@@ -221,7 +227,7 @@ public class ReportNewRelicTest {
 
         ReportNewRelic reportAppD = Guice.createInjector(
                 new AppDReportTestModule(request, reporter, metricRegistry)).getInstance(ReportNewRelic.class);
-        reportAppD.perform(Collections.singletonList(app),
+        reportAppD.perform(app,
                 MetricDataRequest.TimeParams.beforeNow(10L));
 
         Mockito.verify(request, Mockito.times(1)).get();
@@ -234,7 +240,7 @@ public class ReportNewRelicTest {
         assertEquals(0,
                 metricRegistry.counter(StatusType.mtsReported.name()).getCount());
         assertEquals(0,
-                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());*/
+                metricRegistry.counter(StatusType.newRelicRequestFailure.name()).getCount());
     }
 
     private SignalFxProtocolBuffers.DataPoint getDataPoint(String metricName, long timestamp,
@@ -251,7 +257,7 @@ public class ReportNewRelicTest {
         }
         return builder.setMetric(metricName).setTimestamp(timestamp).setValue(
                 SignalFxProtocolBuffers.Datum.newBuilder()
-                        .setIntValue(value)).build();
+                        .setDoubleValue(value)).build();
     }
 
     private Map<String, String> getExpectedDimensions() {

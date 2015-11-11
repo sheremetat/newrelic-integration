@@ -20,7 +20,6 @@ import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 public class ProcessorTest {
 
     @Test
-    @Ignore
     public void testProcessor() {
         List<MetricValue> metricValues = new LinkedList<>();
         metricValues.add(new MetricValue(9,1));
@@ -62,6 +61,6 @@ public class ProcessorTest {
         return SignalFxProtocolBuffers.DataPoint
                 .newBuilder().setMetric(metricName).setTimestamp(timestamp).setValue(
                         SignalFxProtocolBuffers.Datum.newBuilder()
-                                .setIntValue(value)).build();
+                                .setDoubleValue(value)).build();
     }
 }

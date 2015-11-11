@@ -7,6 +7,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -55,11 +58,20 @@ public class MetricDataRequestTest {
         MetricDataRequest metricDataRequest = getMetricDataRequest();
         List<MetricData> metricDataList = metricDataRequest.get();
 
+        Collections.sort(metricDataList, new Comparator<MetricData>() {
+            @Override
+            public int compare(MetricData o1, MetricData o2) {
+                return o2.metricName.compareTo(o1.metricName);
+            }
+        });
+
+        System.out.println(metricDataList);
+
         // New Metric name is calculated by formula "NEWRELIC metric name" + "/" + "value"
         // In case of 6 values we will have 6 metrics
         assertEquals(6, metricDataList.size());
 
-        MetricData metricData = metricDataList.get(5);
+        MetricData metricData = metricDataList.get(2);
         assertEquals("Custom/EventType/hits/max_value",
                 metricData.metricName);
         assertEquals(1, metricData.metricValues.size());

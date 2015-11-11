@@ -52,4 +52,20 @@ public class AppInfo {
 
         return new MetricTimeSeries(actualMetricPath, actualDimensions);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AppInfo appInfo = (AppInfo) o;
+
+        return domains.equals(appInfo.domains);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return domains.hashCode();
+    }
 }
